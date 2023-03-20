@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   nginx:
-    image: nginx
+    image: nginx:alpine
     container_name: koel_nginx
     restart: always
     tty: true
@@ -12,8 +12,8 @@ services:
     volumes:
       - ./.docker-compose/nginx/koel.castorsoft.com.br.conf.template:/etc/nginx/templates/koel.castorsoft.com.br.conf.template
       - ./:/var/www/app/
-      - /home/lamb/certs/castorsoft.com.br/privkey1.pem:/etc/nginx/ssl/privkey.pem
-      - /home/lamb/certs/castorsoft.com.br/fullchain1.pem:/etc/nginx/ssl/fullchain.pem
+      - ./certs/privkey1.pem:/etc/nginx/ssl/castorsoft.com.br.privkey.pem
+      - ./certs/fullchain1.pem:/etc/nginx/ssl/castorsoft.com.br.fullchain.pem
     environment:
       - NGINX_HOST=${APP_URL}
     networks:
@@ -33,15 +33,15 @@ services:
       network:
 
   db:
-    image: mysql
+    image: mysql:alpine
     container_name: koel_db
     restart: always
     tty: true
     environment:
-      - MYSQL_ROOT_PASSWORD=yametekudasai
-      - MYSQL_DATABASE=koel
-      - MYSQL_USER=koel
-      - MYSQL_PASSWORD=koel
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
       - db:/var/lib/mysql
     ports:
