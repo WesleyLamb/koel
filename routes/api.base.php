@@ -38,6 +38,7 @@ use App\Http\Controllers\API\SongController;
 use App\Http\Controllers\API\SongSearchController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\UserInvitationController;
 use App\Http\Controllers\API\YouTubeController;
 use App\Models\Song;
 use Illuminate\Http\Request;
@@ -49,6 +50,9 @@ Route::prefix('api')->middleware('api')->group(static function (): void {
     Route::delete('me', [AuthController::class, 'logout']);
 
     Route::get('ping', static fn () => null);
+
+    Route::get('invitations', [UserInvitationController::class, 'get']);
+    Route::post('invitations/accept', [UserInvitationController::class, 'accept']);
 
     Route::middleware('auth')->group(static function (): void {
         Route::post('broadcasting/auth', static function (Request $request) {
@@ -142,6 +146,9 @@ Route::prefix('api')->middleware('api')->group(static function (): void {
 
         Route::get('search', ExcerptSearchController::class);
         Route::get('search/songs', SongSearchController::class);
+
+        Route::post('invitations', [UserInvitationController::class, 'invite']);
+        Route::delete('invitations', [UserInvitationController::class, 'revoke']);
     });
 
     // Object-storage (S3) routes
