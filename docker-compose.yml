@@ -7,15 +7,15 @@ services:
     restart: always
     tty: true
     ports:
-      - "84:80"
-      - "444:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./.docker-compose/nginx/koel.castorsoft.com.br.conf.template:/etc/nginx/templates/koel.castorsoft.com.br.conf.template
       - ./:/var/www/app/
-      - ./certs/privkey1.pem:/etc/nginx/ssl/castorsoft.com.br.privkey.pem
-      - ./certs/fullchain1.pem:/etc/nginx/ssl/castorsoft.com.br.fullchain.pem
+      - ./.docker-compose/certs/castorsoft.com.br.key:/etc/nginx/ssl/castorsoft.com.br.key
+      - ./.docker-compose/certs/castorsoft.com.br.crt:/etc/nginx/ssl/castorsoft.com.br.crt
     environment:
-      - NGINX_HOST=${APP_URL}
+      - NGINX_HOST=${SERVER_NAME}
     networks:
       network:
   app:
@@ -33,19 +33,18 @@ services:
       network:
 
   db:
-    image: mysql:alpine
+    image: postgres:16-alpine
     container_name: koel_db
     restart: always
     tty: true
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${DB_DATABASE}
-      - MYSQL_USER=${DB_USERNAME}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - db:/var/lib/mysql
+      - db:/var/lib/postgresql/data
     ports:
-      - 3307:3306
+      - "5433:5432"
     networks:
       network:
 volumes:
