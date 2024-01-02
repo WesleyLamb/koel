@@ -2,6 +2,7 @@ css
 fonts
 
 # Ignore all (generated) images under img/, but keep the folder structure
+media
 img/*
 !img/icon.png
 !img/favicon.ico
