@@ -2,80 +2,143 @@
 
 namespace App\Services;
 
-use App\Exceptions\PlaylistBothSongsAndRulesProvidedException;
+use App\Enums\Placement;
+use App\Exceptions\OperationNotApplicableForSmartPlaylistException;
 use App\Models\Playlist;
-use App\Models\PlaylistFolder as Folder;
+use App\Models\Song as Playable;
 use App\Models\User;
-use App\Values\SmartPlaylistRuleGroupCollection;
+use App\Repositories\SongRepository;
+use App\Values\Playlist\PlaylistCreateData;
+use App\Values\Playlist\PlaylistUpdateData;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Webmozart\Assert\Assert;
 
 class PlaylistService
 {
-    public function createPlaylist(
-        string $name,
-        User $user,
-        ?Folder $folder = null,
-        array $songs = [],
-        ?SmartPlaylistRuleGroupCollection $ruleGroups = null
-    ): Playlist {
-        if ($folder) {
-            Assert::true($user->is($folder->user), 'The playlist folder does not belong to the user');
+    public function __construct(
+        private readonly ImageStorage $imageStorage,
+        private readonly SongRepository $songRepository,
+    ) {
+    }
+
+    public function createPlaylist(PlaylistCreateData $data, User $user): Playlist
+    {
+        // cover is optional and not critical, so no transaction is needed
+        $cover = rescue_if($data->cover, function () use ($data) {
+            return $this->imageStorage->storeImage($data->cover);
+        });
+
+        return DB::transaction(
+            static function () use ($data, $cover, $user): Playlist {
+                /** @var Playlist $playlist */
+                $playlist = Playlist::query()->create([
+                    'name' => $data->name,
+                    'description' => $data->description,
+                    'rules' => $data->ruleGroups,
+                    'cover' => $cover,
+                ]);
+
+                $user->ownedPlaylists()->attach($playlist, [
+                    'role' => 'owner',
+                ]);
+
+                $playlist->folders()->attach($data->folderId);
+
+                if (!$playlist->is_smart && $data->playableIds) {
+                    $playlist->addPlayables($data->playableIds, $user);
+                }
+
+                return $playlist;
+            }
+        );
+    }
+
+    public function updatePlaylist(Playlist $playlist, PlaylistUpdateData $dto): Playlist
+    {
+        $data = [
+            'name' => $dto->name,
+            'description' => $dto->description,
+            'rules' => $dto->ruleGroups,
+        ];
+
+        if (is_string($dto->cover)) {
+            $data['cover'] = rescue_if($dto->cover, fn () => $this->imageStorage->storeImage($dto->cover), '');
         }
 
-        if ($songs && $ruleGroups) {
-            throw new PlaylistBothSongsAndRulesProvidedException();
+        $playlist->update($data);
+
+        if ($dto->folderId) {
+            $playlist->folders()->syncWithoutDetaching([$dto->folderId]);
         }
 
-        return DB::transaction(static function () use ($name, $user, $songs, $folder, $ruleGroups): Playlist {
-            /** @var Playlist $playlist */
-            $playlist = $user->playlists()->create([
-                'name' => $name,
-                'rules' => $ruleGroups,
-            ]);
+        return $playlist->refresh();
+    }
 
-            $folder?->playlists()->save($playlist);
+    /** @return EloquentCollection<array-key, Playable> */
+    public function addPlayablesToPlaylist(
+        Playlist $playlist,
+        Collection|Playable|array $playables,
+        User $user
+    ): EloquentCollection {
+        return DB::transaction(function () use ($playlist, $playables, $user) {
+            $playables = Collection::wrap($playables);
 
-            if (!$playlist->is_smart && $songs) {
-                $playlist->songs()->sync($songs);
+            $playlist->addPlayables(
+                $playables->filter(static fn ($song): bool => !$playlist->playables->contains($song)),
+                $user
+            );
+
+            // if the playlist is collaborative, make the songs public
+            if ($playlist->is_collaborative) {
+                $this->makePlaylistContentPublic($playlist);
             }
 
-            return $playlist;
+            // we want a fresh copy of the songs with the possibly updated visibility
+            return $this->songRepository->getManyInCollaborativeContext(
+                ids: $playables->pluck('id')->all(),
+                scopedUser: $user
+            );
         });
     }
 
-    public function updatePlaylist(
+    public function removePlayablesFromPlaylist(Playlist $playlist, Collection|Playable|array $playables): void
+    {
+        $playlist->removePlayables($playables);
+    }
+
+    public function makePlaylistContentPublic(Playlist $playlist): void
+    {
+        $playlist->playables()->where('is_public', false)->update(['is_public' => true]);
+    }
+
+    /** @param array<string> $movingIds */
+    public function movePlayablesInPlaylist(
         Playlist $playlist,
-        string $name,
-        ?Folder $folder = null,
-        ?SmartPlaylistRuleGroupCollection $ruleGroups = null,
-    ): Playlist {
-        if ($folder) {
-            Assert::true($playlist->user->is($folder->user), 'The playlist folder does not belong to the user');
-        }
+        array $movingIds,
+        string $target,
+        Placement $placement,
+    ): void {
+        throw_if($playlist->is_smart, OperationNotApplicableForSmartPlaylistException::class);
 
-        $playlist->update([
-            'name' => $name,
-            'rules' => $ruleGroups,
-            'folder_id' => $folder?->id,
-        ]);
+        DB::transaction(static function () use ($playlist, $movingIds, $target, $placement): void {
+            $targetPosition = $playlist->playables()->wherePivot('song_id', $target)->value('position');
+            $insertPosition = $placement === Placement::BEFORE ? $targetPosition : $targetPosition + 1;
 
-        return $playlist;
-    }
+            // create a "gap" for the moving songs by incrementing the position of the songs after the target
+            $playlist->playables()
+                ->newPivotQuery()
+                ->where('position', $placement === Placement::BEFORE ? '>=' : '>', $targetPosition)
+                ->whereNotIn('song_id', $movingIds)
+                ->increment('position', count($movingIds));
 
-    public function addSongsToPlaylist(Playlist $playlist, array $songIds): void
-    {
-        $playlist->songs()->syncWithoutDetaching($songIds);
-    }
+            $values = [];
 
-    public function removeSongsFromPlaylist(Playlist $playlist, array $songIds): void
-    {
-        $playlist->songs()->detach($songIds);
-    }
+            foreach ($movingIds as $id) {
+                $values[$id] = ['position' => $insertPosition++];
+            }
 
-    /** @deprecated since v6.0.0, use add/removeSongs methods instead */
-    public function populatePlaylist(Playlist $playlist, array $songIds): void
-    {
-        $playlist->songs()->sync($songIds);
+            $playlist->playables()->syncWithoutDetaching($values);
+        });
     }
 }

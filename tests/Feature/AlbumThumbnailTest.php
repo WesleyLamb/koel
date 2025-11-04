@@ -3,42 +3,51 @@
 namespace Tests\Feature;
 
 use App\Models\Album;
-use App\Services\MediaMetadataService;
+use App\Services\ImageStorage;
+use App\Values\ImageWritingConfig;
 use Mockery;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class AlbumThumbnailTest extends TestCase
 {
-    private MockInterface $mediaMetadataService;
+    private ImageStorage|MockInterface $imageStorage;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->mediaMetadataService = self::mock(MediaMetadataService::class);
+        $this->imageStorage = $this->mock(ImageStorage::class);
     }
 
-    /** @return array<mixed> */
-    public function provideAlbumThumbnailData(): array
-    {
-        return [['http://localhost/img/covers/foo_thumbnail.jpg'], [null]];
-    }
-
-    /** @dataProvider provideAlbumThumbnailData */
-    public function testGetAlbumThumbnail(?string $thumbnailUrl): void
+    #[Test]
+    public function getAlbumThumbnail(): void
     {
         /** @var Album $createdAlbum */
-        $createdAlbum = Album::factory()->create();
+        $createdAlbum = Album::factory()->create(['cover' => 'foo.jpg']);
 
-        $this->mediaMetadataService
-            ->shouldReceive('getAlbumThumbnailUrl')
-            ->once()
-            ->with(Mockery::on(static function (Album $album) use ($createdAlbum): bool {
-                return $album->id === $createdAlbum->id;
-            }))
-            ->andReturn($thumbnailUrl);
+        $this->imageStorage
+            ->expects('storeImage')
+            ->with(
+                image_storage_path('foo.jpg'),
+                Mockery::on(static fn (ImageWritingConfig $config) => $config->maxWidth === 48),
+                image_storage_path('foo_thumb.jpg'),
+            )
+            ->andReturn('foo_thumb.jpg');
 
-        $response = $this->getAs("api/album/{$createdAlbum->id}/thumbnail");
-        $response->assertJson(['thumbnailUrl' => $thumbnailUrl]);
+        $response = $this->getAs("api/albums/{$createdAlbum->id}/thumbnail");
+        $response->assertJson(['thumbnailUrl' => image_storage_url('foo_thumb.jpg')]);
+    }
+
+    #[Test]
+    public function getThumbnailForAlbumWithoutCover(): void
+    {
+        /** @var Album $createdAlbum */
+        $createdAlbum = Album::factory()->create(['cover' => '']);
+        $this->imageStorage->expects('storeImage')->never();
+
+        $response = $this->getAs("api/albums/{$createdAlbum->id}/thumbnail");
+        $response->assertJson(['thumbnailUrl' => null]);
     }
 }

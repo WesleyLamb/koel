@@ -1,46 +1,33 @@
-import { expect, it } from 'vitest'
-import UnitTestCase from '@/__tests__/UnitTestCase'
-import { settingStore } from '@/stores'
-import { screen, waitFor } from '@testing-library/vue'
-import { DialogBoxStub } from '@/__tests__/stubs'
-import SettingsScreen from './SettingsScreen.vue'
+import { screen } from '@testing-library/vue'
+import { describe, expect, it } from 'vitest'
+import { createHarness } from '@/__tests__/TestHarness'
+import Component from './SettingsScreen.vue'
 
-new class extends UnitTestCase {
-  protected test () {
-    it('renders', () => expect(this.render(SettingsScreen).html()).toMatchSnapshot())
+describe('settingsScreen.vue', () => {
+  const h = createHarness()
 
-    it('submits the settings form', async () => {
-      const updateMock = this.mock(settingStore, 'update')
-      const goMock = this.mock(this.router, 'go')
-
-      settingStore.state.media_path = ''
-      this.render(SettingsScreen)
-
-      await this.type(screen.getByLabelText('Media Path'), '/media')
-      await this.user.click(screen.getByRole('button', { name: 'Scan' }))
-
-      await waitFor(() => {
-        expect(updateMock).toHaveBeenCalledWith({ media_path: '/media' })
-        expect(goMock).toHaveBeenCalledWith('home')
-      })
-    })
-
-    it('confirms upon media path change', async () => {
-      const updateMock = this.mock(settingStore, 'update')
-      const goMock = this.mock(this.router, 'go')
-      const confirmMock = this.mock(DialogBoxStub.value, 'confirm')
-
-      settingStore.state.media_path = '/old'
-      this.render(SettingsScreen)
-
-      await this.type(screen.getByLabelText('Media Path'), '/new')
-      await this.user.click(screen.getByRole('button', { name: 'Scan' }))
-
-      await waitFor(() => {
-        expect(updateMock).not.toHaveBeenCalled()
-        expect(goMock).not.toHaveBeenCalled()
-        expect(confirmMock).toHaveBeenCalled()
-      })
+  const renderComponent = () => {
+    return h.render(Component, {
+      global: {
+        stubs: {
+          MediaPathSettingGroup: h.stub('media-path-setting-group'),
+          BrandingSettingGroup: h.stub('branding-setting-group'),
+        },
+      },
     })
   }
-}
+
+  it('does not have the branding setting group in Community license', () => {
+    renderComponent()
+    screen.getByTestId('media-path-setting-group')
+    expect(screen.queryByTestId('branding-setting-group')).toBeNull()
+  })
+
+  it('has the branding settings in Plus license', () => {
+    h.withPlusEdition(() => {
+      renderComponent()
+      screen.getByTestId('media-path-setting-group')
+      screen.getByTestId('branding-setting-group')
+    })
+  })
+})

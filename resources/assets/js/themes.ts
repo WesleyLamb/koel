@@ -14,163 +14,183 @@ import bgCat from '../img/themes/bg-cat.jpg'
 import thumbCat from '../img/themes/thumbnails/cat.jpg'
 import bgDawn from '../img/themes/bg-dawn.jpg'
 import thumbDawn from '../img/themes/thumbnails/dawn.jpg'
+import thumbMono from '../img/themes/thumbnails/mono.avif'
 
 export default [
   {
     id: 'classic',
-    thumbnailColor: '#181818'
+    name: 'Classic',
+    thumbnail_color: '#181818',
+  },
+  {
+    id: 'mono',
+    name: 'Mono',
+    thumbnail_color: '#181818',
+    thumbnail_image: thumbMono,
+    properties: {
+      '--font-family': 'ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace',
+      '--color-highlight': '#bc2e2e',
+    },
   },
   {
     id: 'violet',
-    thumbnailColor: '#31094e',
+    name: 'Violet',
+    thumbnail_color: '#31094e',
     properties: {
-      '--color-bg-primary': '#31094e',
-      '--color-highlight': '#c23de5'
-    }
+      '--color-bg': '#31094e',
+      '--color-highlight': '#c23de5',
+    },
   },
   {
     id: 'oak',
-    thumbnailColor: '#560d25',
+    name: 'Oak',
+    thumbnail_color: '#560d25',
     properties: {
-      '--color-bg-primary': '#560d25',
-      '--color-highlight': '#fd4b67'
-    }
+      '--color-bg': '#560d25',
+      '--color-highlight': '#fd4b67',
+    },
   },
   {
     id: 'slate',
-    thumbnailColor: '#29434e',
+    name: 'Slate',
+    thumbnail_color: '#29434e',
     properties: {
-      '--color-bg-primary': '#29434e',
-      '--color-highlight': '#6c8b99'
-    }
+      '--color-bg': '#29434e',
+      '--color-highlight': '#6c8b99',
+    },
   },
   {
     id: 'madison',
-    thumbnailColor: '#0e3463',
+    name: 'Madison',
+    thumbnail_color: '#0e3463',
     properties: {
-      '--color-bg-primary': '#0e3463',
-      '--color-bg-highlight': '#fbab18'
-    }
+      '--color-bg': '#0e3463',
+      '--color-highlight': '#fbab18',
+    },
   },
   {
     id: 'astronaut',
-    thumbnailColor: '#2a3074',
+    name: 'Astronaut',
+    thumbnail_color: '#2a3074',
     properties: {
-      '--color-bg-primary': '#2a3074',
-      '--color-highlight': '#7a78dd'
-    }
+      '--color-bg': '#2a3074',
+      '--color-highlight': '#7a78dd',
+    },
   },
   {
     id: 'chocolate',
-    thumbnailColor: '#3f2724',
+    name: 'Chocolate',
+    thumbnail_color: '#3f2724',
     properties: {
-      '--color-bg-primary': '#3f2724',
-      '--color-highlight': '#d96759'
-    }
+      '--color-bg': '#3f2724',
+      '--color-highlight': '#d96759',
+    },
   },
   {
     id: 'laura',
-    thumbnailColor: '#126673',
+    name: 'Laura',
+    thumbnail_color: '#126673',
     properties: {
-      '--color-bg-primary': '#126673',
-      '--color-highlight': 'rgba(10, 244, 255, .64)'
-    }
+      '--color-bg': '#126673',
+      '--color-highlight': 'rgba(10, 244, 255, .64)',
+    },
   },
   {
     id: 'dawn',
     name: 'Before the Dawn',
-    thumbnailUrl: thumbDawn,
+    thumbnail_image: thumbDawn,
     properties: {
       '--color-highlight': '#ed5135',
-      '--color-accent': '#f4944f',
       '--bg-image': `url(${bgDawn})`,
-      '--color-bg-primary': '#1e2747',
-      '--bg-position': 'center bottom'
-    }
+      '--color-bg': '#1e2747',
+      '--bg-position': 'center bottom',
+    },
   },
   {
     id: 'rose-petals',
     name: '…Has Its Thorns',
-    thumbnailColor: '#7d083b',
-    thumbnailUrl: bgRosePetal,
+    thumbnail_color: '#7d083b',
+    thumbnail_image: bgRosePetal,
     properties: {
-      '--color-bg-primary': '#7d083b',
-      '--bg-image': `url(${bgRosePetal})`
-    }
+      '--color-bg': '#7d083b',
+      '--bg-image': `url(${bgRosePetal})`,
+    },
   },
   {
     id: 'purple-waves',
-    name: 'Waves of Fortune',
-    thumbnailColor: '#44115c',
-    thumbnailUrl: bgPurpleWaves,
+    name: 'Fortune Waves',
+    thumbnail_color: '#44115c',
+    thumbnail_image: bgPurpleWaves,
     properties: {
-      '--color-bg-primary': '#44115c',
-      '--bg-image': `url(${bgPurpleWaves})`
-    }
+      '--color-bg': '#44115c',
+      '--bg-image': `url(${bgPurpleWaves})`,
+    },
   },
   {
     id: 'pop-culture',
-    thumbnailColor: '#ad0937',
-    thumbnailUrl: thumbPopCulture,
+    name: 'Pop Culture',
+    thumbnail_color: '#ad0937',
+    thumbnail_image: thumbPopCulture,
     properties: {
-      '--color-bg-primary': '#ad0937',
+      '--color-bg': '#ad0937',
       '--color-highlight': 'rgba(234, 208, 110, .9)',
-      '--bg-image': `url(${bgPopCulture})`
-    }
+      '--bg-image': `url(${bgPopCulture})`,
+    },
   },
   {
     id: 'jungle',
-    name: 'Welcome to the Jungle',
-    thumbnailColor: '#0f0f03',
-    thumbnailUrl: thumbJungle,
+    name: 'To the Jungle',
+    thumbnail_color: '#0f0f03',
+    thumbnail_image: thumbJungle,
     properties: {
-      '--color-bg-primary': '#0f0f03',
+      '--color-bg': '#0f0f03',
       '--color-highlight': '#4f9345',
-      '--bg-image': `url(${bgJungle})`
-    }
+      '--bg-image': `url(${bgJungle})`,
+    },
   },
   {
     id: 'mountains',
     name: 'Rocky Mountain High',
-    thumbnailColor: '#0e2656',
-    thumbnailUrl: thumbMountains,
+    thumbnail_color: '#0e2656',
+    thumbnail_image: thumbMountains,
     properties: {
-      '--color-bg-primary': '#0e2656',
+      '--color-bg': '#0e2656',
       '--color-highlight': '#6488c3',
-      '--bg-image': `url(${bgMountains})`
-    }
+      '--bg-image': `url(${bgMountains})`,
+    },
   },
   {
     id: 'pines',
     name: 'In the Pines',
-    thumbnailColor: '#06090c',
-    thumbnailUrl: thumbPines,
+    thumbnail_color: '#06090c',
+    thumbnail_image: thumbPines,
     properties: {
-      '--color-bg-primary': '#06090c',
+      '--color-bg': '#06090c',
       '--color-highlight': '#5984b9',
-      '--bg-image': `url(${bgPines})`
-    }
+      '--bg-image': `url(${bgPines})`,
+    },
   },
   {
     id: 'nemo',
-    thumbnailColor: '#031724',
-    thumbnailUrl: thumbNemo,
+    name: 'Nemo',
+    thumbnail_color: '#031724',
+    thumbnail_image: thumbNemo,
     properties: {
-      '--color-bg-primary': '#031724',
+      '--color-bg': '#031724',
       '--color-highlight': '#2896b8',
-      '--bg-image': `url(${bgNemo})`
-    }
+      '--bg-image': `url(${bgNemo})`,
+    },
   },
   {
     id: 'cat',
     name: 'What\'s New Pussycat?',
-    thumbnailColor: '#000',
-    thumbnailUrl: thumbCat,
+    thumbnail_color: '#000',
+    thumbnail_image: thumbCat,
     properties: {
-      '--color-bg-primary': '#000',
+      '--color-bg': '#000',
       '--color-highlight': '#d26c37',
       '--bg-image': `url(${bgCat})`,
-      '--bg-position': 'left'
-    }
-  }
+      '--bg-position': 'left',
+    },
+  },
 ] as Theme[]
